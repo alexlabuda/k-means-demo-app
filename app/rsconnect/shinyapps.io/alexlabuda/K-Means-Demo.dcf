@@ -1,0 +1,12 @@
+name: K-Means-Demo
+title: K-Means-Demo
+username: alexlabuda
+account: alexlabuda
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 11327470
+bundleId: 8297186
+url: https://alexlabuda.shinyapps.io/K-Means-Demo/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

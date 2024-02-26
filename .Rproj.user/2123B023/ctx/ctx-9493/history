@@ -1,0 +1,17 @@
+shiny::runApp('app')
+library(shiny)
+library(tidyverse)
+library(bslib)
+library(palmerpenguins)
+library(tidyquant)
+library(tidyclust)
+library(tidymodels)
+theme_set(theme_minimal())
+pengs_tbl <- penguins
+iris_tbl  <- iris |> as_tibble()
+pengs_tbl
+iris_tbl
+iris_tbl  <- iris |> as_tibble() |> rename(species = Species)
+iris_tbl
+runApp('app')
+runApp('app')

@@ -1,0 +1,428 @@
+
+# Cluster Analysis --------------------------------------------------------
+
+# Libraries
+library(tidyverse)
+library(janitor)
+
+# Model / other
+library(timetk)
+library(tidymodels)
+library(tidyclust)
+library(plotly)
+library(tidyquant)
+
+
+theme_set(theme_minimal())
+
+source("00_helper_functions.R")
+
+
+# Define Constants ---------------------------------------------------------
+
+# We will measure 3 cohorts:
+## 1. 2022-10-01 - 2023-03-28
+## 2. 2022-10-01 - 2023-05-10
+## 3. 2022-10-01 - 2023-07-31
+
+## COHORT RANGE:
+date_cohort_1_start <- "2022-10-01"
+date_cohort_1_end   <- "2023-03-28"
+
+date_cohort_2_start <- "2022-10-01"
+date_cohort_2_end   <- "2023-05-10"
+
+date_cohort_3_start <- "2022-10-01"
+date_cohort_3_end   <- "2023-07-31"
+
+
+## CANCEL RANGE:
+date_cancel_1_start <- "2023-02-01"
+date_cancel_1_end   <- "2023-03-28"
+
+date_cancel_2_start <- "2023-03-29"
+date_cancel_2_end   <- "2023-05-10"
+
+date_cancel_3_start <- "2023-05-11"
+date_cancel_3_end   <- "2023-07-31"
+
+
+# # Subscriptions within
+start_date_sub        <- date_cohort_3_start
+end_date_sub          <- date_cohort_3_end
+# subscription_interval <- interval(start_date_sub, end_date_sub)
+
+# Cancellations within
+start_date_cancel <- date_cancel_3_start
+end_date_cancel   <- date_cancel_3_end
+cancel_interval   <- interval(start_date_cancel, end_date_cancel)
+
+
+# RETRIEVE DATA ------------------------------------------------------------
+
+file_path_march <- "end-of-season-nhl-nba/data/segmentation_engineered_data_2022-10-01_2023-03-28.rds"
+file_path_may   <- "end-of-season-nhl-nba/data/segmentation_engineered_data_2022-10-01_2023-05-10.rds"
+file_path_july  <- "end-of-season-nhl-nba/data/segmentation_engineered_data_2022-10-01_2023-07-31.rds"
+
+
+engineered_data_tbl <- read_rds(file_path_july)
+# |> 
+#   mutate(
+#     has_watched_mlb = as.factor(ifelse(has_watched_mlb > 0, "Yes", "No")),
+#     recency         = as.integer(date(end_date_cancel) - date)
+#   ) |> 
+#   relocate(recency, .after = avg_days_between_sessions) |> 
+#   relocate(date, .after = customer_id)
+
+engineered_data_tbl |> glimpse()
+
+
+# Label Cancellation -------------------------------------------------------
+
+# If cancellation date is within cancel_interval, then "Cancelled"
+# engineered_data_tbl <- 
+#   engineered_data_tbl |> 
+#   mutate(
+#     cancelled_status = ifelse(
+#       cancelation_date %within% cancel_interval, "Cancelled", "Active"
+#     ),
+#     cancelled_status = ifelse(is.na(cancelled_status), "Active", cancelled_status)
+#   )
+
+# Only keep users where cancellation is greater than the start_date_cancel OR
+# their cancelation_date is.na()
+# filtered_data_tbl <- 
+#   engineered_data_tbl |> 
+#   filter(
+#     (cancelation_date %within% cancel_interval | is.na(cancelation_date))
+#   )
+
+filtered_data_tbl <- engineered_data_tbl |> 
+  select(-total_min_per_session, -min_streamed_total) |> 
+  rename(content_preference_NBA   = NBA,
+         content_preference_MLB   = MLB,
+         content_preference_NHL   = NHL,
+         content_preference_Other = Other,
+         device_preference_Phone  = Phone,
+         device_preference_Tablet = Tablet,
+         device_preference_TV     = TV,
+         device_preference_Web    = Web,
+         engagement_score_mins    = engagement_score
+         ) |> 
+  mutate(days_since_first_activity = as.integer(max(date) - first_activity_date)) |> 
+  mutate(engagement_score_sessions = total_sessions / (days_since_first_activity + 1)) |>
+  mutate(engagement_score_mins     = total_mins_streamed / (days_since_first_activity + 1)) |>
+  # if frequency of use or engagement_score_sessions is 1, set to NA
+  mutate(engagement_score_sessions = ifelse(engagement_score_sessions == 1, NA_real_, engagement_score_sessions)) |>
+  mutate(frequency_of_use = ifelse(frequency_of_use == 1, NA_real_, frequency_of_use))
+
+filtered_data_tbl |> glimpse()
+
+# filtered_data_tbl |> count(package, sort = TRUE)
+
+
+## Weekly cancellation 
+# Create a weekly time series of cancellations
+
+# filtered_data_tbl |> 
+#   filter(!is.na(cancelation_date)) |> 
+#   summarise_by_time(
+#     .date_var = cancelation_date,
+#     .by       = "day",
+#     count     = n_distinct(customer_id)
+#   ) |> 
+#   plot_time_series(
+#     .date_var = cancelation_date,
+#     .value    = count,
+#     .smooth = FALSE,
+#     .interactive = FALSE,
+#     .title = paste0("Users that cancelled between ", start_date_cancel, " and ", end_date_cancel)
+#   ) +
+#   theme_light() +
+#   theme(
+#     panel.grid.major.x = element_blank(),
+#     panel.grid.minor.x = element_blank()
+#   )
+# 
+# path <- paste0("end-of-season-nhl-nba/artifacts/","cancellations_", start_date_cancel, "_", end_date_cancel, ".png")
+# 
+# ggsave(path, height = 5, width = 11)
+
+
+# Distributions -----------------------------------------------------------
+
+# Plot distibutions of each var
+df_long <- filtered_data_tbl %>%
+  pivot_longer(cols = -c(customer_id, has_watched_mlb, date, most_frequent_ga_property, most_frequent_device_type, first_activity_date, cancelled_status), # Exclude non-numeric and identifier columns
+               names_to = "metric",
+               values_to = "value") %>%
+  filter(!is.na(value)) # Optional: remove NA values to clean up the data
+
+# Step 3: Filter out non-numeric columns if not already done. In this case, it's assumed all pivoted columns are numeric.
+
+# Step 4: Plot the distributions using ggplot2
+# You can plot distributions for each metric one at a time or use facets to create a grid of plots
+ggplot(df_long, aes(x = value)) +
+  geom_histogram(bins = 30, fill = "midnightblue", color = "white", alpha = 0.85) + # Adjust the number of bins as needed
+  facet_wrap(~metric, scales = "free") + # Use free_x to allow each plot to have its own x-axis scale
+  theme_minimal() +
+  labs(title = "Distributions of Numeric Metrics",
+       x = "Value",
+       y = "Frequency")
+
+# total_mins_streamed: 
+# Log1p 
+filtered_data_tbl |> 
+  ggplot(aes(frequency_of_use)) +
+  geom_histogram()
+
+# total_sessions:
+# log1p
+filtered_data_tbl |> 
+  # outlier_winsorize("total_sessions") |>
+  ggplot(aes(log1p(total_sessions))) +
+  geom_histogram(bins = 50)
+
+# total_min_per_session:
+# winsorize outliers ONLY
+filtered_data_tbl |> 
+  outlier_winsorize("total_min_per_session") |>
+  ggplot(aes(total_min_per_session)) +
+  geom_histogram(bins = 50)
+
+# avg_days_between_sessions:
+# winsor outliers - multiplier = 2
+filtered_data_tbl |> 
+  outlier_winsorize("avg_days_between_sessions", multiplier = 2) |>
+  ggplot(aes(avg_days_between_sessions)) +
+  geom_histogram(bins = 30)
+
+# watch_mlb_count:
+filtered_data_tbl |> 
+  ggplot(aes(watch_mlb_count)) +
+  geom_boxplot()
+
+# all roll_avgs:
+# log1p
+filtered_data_tbl |> 
+  select(customer_id, starts_with("roll_")) |>
+  pivot_longer(
+    cols = starts_with("roll_"),
+    names_to = "roll",
+    values_to = "value"
+  ) |> 
+  ggplot(aes(log1p(value))) +
+  geom_histogram(bins = 30) +
+  facet_wrap(~ roll, scales = "free")
+
+
+# Perform winsorizing -----------------------------------------------------
+
+# For total_min_per_session, avg_days_between_sessions
+# filtered_data_tbl <- 
+#   filtered_data_tbl |> outlier_winsorize("total_min_per_session")
+# 
+# filtered_data_tbl <- 
+#   filtered_data_tbl |> outlier_winsorize("avg_days_between_sessions", multiplier = 2)
+
+
+# Recipe ------------------------------------------------------------------
+
+filtered_data_tbl |> glimpse()
+
+filtered_data_tbl |> skimr::skim()
+
+rec_cluster <- recipe(~ ., data = filtered_data_tbl) |> 
+  step_rm(date, churn_date, cancelation_date, service_start_date, paid_status,
+          most_frequent_home_team, most_frequent_away_team, subscription_id, 
+          paid_status, cancelled_status) |> 
+  update_role(customer_id, new_role = "ID") |>
+  # Missing categorical values
+  step_unknown(all_nominal_predictors(), -has_watched_mlb, -all_outcomes()) |> 
+  # Missing values
+  step_impute_mean(all_numeric_predictors(), -all_outcomes()) |>
+  step_other(starts_with("most_frequent"),
+             starts_with("package"),
+             payment_method,
+             threshold = 0.05) |> 
+  # Log transform
+  # step_log(starts_with("roll_"),
+  #          total_sessions, total_mins_streamed, 
+  #          -all_outcomes(), offset = 1
+  #          ) |>
+  # Normalize numerics
+  step_normalize(all_numeric_predictors(), -all_outcomes()) |> 
+  # Dummy variables
+  step_dummy(all_nominal_predictors(), one_hot = FALSE)
+
+
+rec_cluster
+
+rec_cluster |> prep() |> bake(new_data = NULL) |> glimpse()
+
+
+# rec_numeric_cluster <- recipe(~ ., data = filtered_data_tbl) |> 
+#   step_rm(date, churn_date, cancelation_date, service_start_date, paid_status,
+#           most_frequent_home_team, most_frequent_away_team, subscription_id, 
+#           paid_status, cancelled_status) |> 
+#   update_role(customer_id, new_role = "ID") |>
+#   step_rm(all_nominal_predictors()) |> 
+#   # Missing categorical values
+#   step_unknown(all_nominal_predictors(), -all_outcomes()) |> 
+#   # Missing values
+#   step_impute_mean(all_numeric_predictors(), -all_outcomes()) |>
+#   # step_other(starts_with("most_frequent"),
+#   #            starts_with("package"),
+#   #            payment_method,
+#   #            threshold = 0.05) |> 
+#   # Log transform
+#   # step_log(starts_with("roll_"),
+#   #          total_sessions, total_mins_streamed, 
+#   #          -all_outcomes(), offset = 1
+#   #          ) |>
+#   # Normalize numerics
+#   step_normalize(all_numeric_predictors(), -all_outcomes()) |> 
+#   # Dummy variables
+#   step_dummy(all_nominal_predictors(), one_hot = FALSE) |> 
+#   step_pca(threshold = 0.9)
+
+rec_numeric_cluster <- recipe(~ ., data = filtered_data_tbl) |> 
+  step_rm(contains("date"), starts_with("most_frequent"), 
+          has_watched_mlb, cancelled_status,
+          total_streams) |> 
+  update_role(customer_id, new_role = "ID") |>
+  # step_rm(all_nominal_predictors()) |> 
+  # # Missing categorical values
+  # step_unknown(all_nominal_predictors(), -all_outcomes()) |> 
+  # Missing values
+  step_impute_median(all_numeric_predictors(), -all_outcomes()) |>
+  # step_other(starts_with("most_frequent"),
+  #            starts_with("package"),
+  #            payment_method,
+  #            threshold = 0.05) |> 
+  # Log transform
+  # step_log(starts_with("roll_"),
+  #          total_sessions, total_mins_streamed, 
+  #          -all_outcomes(), offset = 1
+  #          ) |>
+  # Log transformation
+  step_log(starts_with("roll_"), 
+           starts_with("engagement"),
+           total_sessions, total_mins_streamed,
+           recency, avg_days_between_sessions,
+           offset = 1) |> 
+  # Normalize numerics
+  step_normalize(all_numeric_predictors(), -all_outcomes()) |> 
+  # Dummy variables
+  # step_dummy(all_nominal_predictors(), one_hot = FALSE) |> 
+  step_pca(threshold = 0.95)
+
+
+rec_numeric_cluster
+
+rec_numeric_cluster |> prep() |> bake(new_data = NULL) |> glimpse()
+
+
+# K-Means Model -----------------------------------------------------------
+
+model_kmeans <- k_means(num_clusters = 3) |> 
+  set_engine("stats")
+
+set.seed(123)
+wflw_fit_kmeans <- workflow() |> 
+  add_model(model_kmeans) |>
+  add_recipe(rec_numeric_cluster) |>
+  fit(data = filtered_data_tbl)
+
+
+## Predict Clusters -------------------------------------------------------
+
+cluster_assigned_tbl <- 
+  wflw_fit_kmeans |> augment(filtered_data_tbl)
+
+cluster_assigned_tbl |> glimpse()
+
+
+# Visualize Clusters ------------------------------------------------------
+
+set.seed(234)
+cluster_assigned_tbl |> 
+  filter(total_sessions > 1) |> 
+  slice_sample(n = 500) |> 
+  ggplot(aes(total_mins_streamed, avg_session_duration)) +
+  geom_point(
+    aes(fill = .pred_cluster),
+    shape = 21,
+    alpha = 0.35,
+    size  = 4
+  ) +
+  geom_smooth(color = "grey30", se = FALSE, linewidth = 0.4) +
+  labs(
+    title    = "Engagement Cohorts of Users",
+    subtitle = paste0("User segment: ", start_date_sub, " - ", end_date_sub),
+    x        = "Total Minutes Streamed",
+    y        = "Minutes Per Session"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    panel.grid = element_blank()
+  )
+
+# ggplotly(g)
+super_users         <- "Super Users"
+high_engagement     <- "High Engagement"
+moderate_engagement <- "Moderate Engagement"
+low_engagement      <- "Low Engagement"
+
+# Label clusters
+cluster_assigned_tbl <- cluster_assigned_tbl |> 
+  mutate(cluster_label = case_when(
+    .pred_cluster == "Cluster_1" ~ super_users,
+    .pred_cluster == "Cluster_2" ~ low_engagement,
+    .pred_cluster == "Cluster_3" ~ high_engagement,
+    # .pred_cluster == "Cluster_4" ~ high_engagement,
+  ))
+  
+
+
+path <- paste0("end-of-season-nhl-nba/data/","cluster_assigned_tbl_v2_", start_date_cancel, "_", end_date_cancel, ".rds")
+write_rds(cluster_assigned_tbl, path)
+
+
+set.seed(234)
+cluster_assigned_tbl |> 
+  filter(total_sessions > 1) |>
+  slice_sample(n = 1000) |> 
+  ggplot(aes(total_mins_streamed, avg_session_duration)) +
+  geom_point(
+    aes(fill = cluster_label),
+    shape = 21,
+    alpha = 0.25,
+    size  = 4
+  ) +
+  geom_smooth(color = "grey40", se = FALSE, linewidth = 0.3) +
+  labs(
+    title    = "Engagement Cohorts of Users",
+    subtitle = paste0("User segment: ", start_date_sub, " - ", end_date_sub),
+    x        = "Total Minutes Streamed",
+    y        = "Minutes Per Session"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold"),
+  ) +
+  # update legend title
+  guides(fill = guide_legend(title = "Cohort Segment")) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    panel.grid = element_blank()
+  ) +
+  scale_fill_tq()
+
+ggsave(
+  paste0("end-of-season-nhl-nba/artifacts/cluster_scatterplot_v2_", start_date_cancel, "_", end_date_cancel, ".jpg"), 
+  width = 12, height = 5, dpi = 300)
+
+
+
+
+

@@ -1,0 +1,221 @@
+library(shiny)
+library(bslib)
+runApp('app')
+library(shiny)
+library(bslib)
+library(palmerpenguins)
+library(tidyverse)
+penguins_raw |> glimpse()
+penguins |> glimpse()
+cars
+mtcars
+pengs_tbl <- penguins
+cars_tbl  <- mtcars
+iris
+mtcars
+penguins
+pengs_tbl <- penguins
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+pengs_tbl |>
+ggplot(aes(x = body_mass_g, y = flipper_length_mm, color = species)) +
+geom_point() +
+labs(title = "Penguin Body Mass vs Flipper Length")
+pengs_tbl |>
+ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+geom_point() +
+labs(title = "Penguin Body Mass vs Flipper Length")
+cars_tbl |>
+ggplot(aes(x = wt, y = mpg, color = factor(cyl))) +
+geom_point() +
+labs(title = "Car Weight vs MPG")
+iris_tbl |>
+ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+geom_point() +
+labs(title = "Iris Sepal Length vs Sepal Width")
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+runApp('app')
+runApp('app')
+runApp('app')
+runApp('app')
+runApp('app')
+runApp('app')
+names(datasets)
+names(pengs_tbl)
+pengs_tbl |> select(where(is.numeric()))
+pengs_tbl |> select(where(is.numeric())
+pengs_tbl |> select(where(is.numeric))
+pengs_tbl |> select(where(is.numeric))
+cars_tbl |> select(where(is.numeric))
+iris_tbl |> select(where(is.numeric))
+runApp('app')
+df <- datasets[["Penguins"]]
+df
+df |> select(where(is.numeric))
+pengs_tbl <- penguins |> select(-year)
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+pengs_tbl |>
+ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+geom_point() +
+labs(title = "Penguin Body Mass vs Flipper Length")
+cars_tbl |>
+ggplot(aes(x = wt, y = mpg, color = factor(cyl))) +
+geom_point() +
+labs(title = "Car Weight vs MPG")
+iris_tbl |>
+ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+geom_point() +
+labs(title = "Iris Sepal Length vs Sepal Width")
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+df <- datasets[["Penguins"]]
+df |> select(where(is.numeric))
+## Test KMEANS
+kmeans(
+x       = df |> select(where(is.numeric)),
+centers = input$k
+)
+centers <- 2
+## Test KMEANS
+kmeans(
+x       = df |> select(where(is.numeric)),
+centers = centers
+)
+kmeans(
+x       = df |> select(where(is.numeric)),
+centers = centers
+)
+df <- datasets[["Penguins"]] |>
+drop_na()
+centers <- 2
+## Test KMEANS
+kmeans(
+x       = df |> select(where(is.numeric)),
+centers = centers
+)
+library(factoextra)
+install.packages("factoextra")
+library(shiny)
+library(tidyverse)
+library(bslib)
+library(palmerpenguins)
+library(tidyquant)
+library(cluster)
+library(factoextra)
+theme_set(theme_minimal())
+pengs_tbl <- penguins |> select(-year)
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+df <- datasets[["Penguins"]] |>
+drop_na()
+centers <- 2
+fviz_nbclust(
+df |> select(where(is.numeric)),
+kmeans,
+method = "wss"
+)
+runApp('app')
+runApp('app')
+library(shiny)
+library(tidyverse)
+library(bslib)
+library(palmerpenguins)
+library(tidyquant)
+library(cluster)
+library(factoextra)
+theme_set(theme_minimal())
+pengs_tbl <- penguins |> select(-year)
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+pengs_tbl |>
+ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+geom_point() +
+labs(title = "Penguin Body Mass vs Flipper Length")
+cars_tbl |>
+ggplot(aes(x = wt, y = mpg, color = factor(cyl))) +
+geom_point() +
+labs(title = "Car Weight vs MPG")
+iris_tbl |>
+ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+geom_point() +
+labs(title = "Iris Sepal Length vs Sepal Width")
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+df <- datasets[["Penguins"]] |>
+drop_na()
+centers <- 2
+## Test KMEANS
+kmeans(
+x       = df |> select(where(is.numeric)),
+centers = centers
+)
+fviz_nbclust(
+df |> select(where(is.numeric)),
+kmeans,
+method = "wss"
+)
+## Test KMEANS
+# function to compute total within-cluster sum of square
+wss <- function(k) {
+kmeans(df, k, nstart = 10 )$tot.withinss
+}
+runApp('app')
+runApp('app')
+library(shiny)
+library(tidyverse)
+library(bslib)
+library(palmerpenguins)
+library(tidyquant)
+library(cluster)
+library(factoextra)
+library(tidyclust)
+theme_set(theme_minimal())
+library(tidymodels)
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+df <- datasets[["Penguins"]]
+df <- datasets[["Penguins"]] |>
+drop_na()
+# K means test
+rec_spec <- recipe(~ ., data = df |> select(where(is.numeric))) %>%
+step_normalize(all_numeric_predictors()) %>%
+step_pca(all_numeric_predictors(), threshold = 0.95)
+k <- 3
+# K means test
+rec_spec <- recipe(~ ., data = df |> select(where(is.numeric))) %>%
+step_normalize(all_numeric_predictors()) %>%
+step_pca(all_numeric_predictors(), threshold = 0.95)
+kmeans_spec <- k_means(num_clusters = k) %>%
+set_engine("ClusterR")
+kmeans_wf <- workflow(rec_spec, kmeans_spec)
+kmeans_wf
+kmeans_fit <- kmeans_wf |>
+fit(data = df |> select(where(is.numeric)))
+kmeans_fit
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = PC1, y = PC2, color = .cluster)) +
+geom_point() +
+labs(title = "K-Means Clustering")
+kmeans_fit |> augment(df |> select(where(is.numeric)))
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = bill_length_mm, y = body_mass_g, color = pred_cluster)) +
+geom_point() +
+labs(title = "K-Means Clustering")
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = bill_length_mm, y = body_mass_g, color = .pred_cluster)) +
+geom_point() +
+labs(title = "K-Means Clustering")

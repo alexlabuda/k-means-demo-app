@@ -1,0 +1,512 @@
+kmeans_fit <- kmeans_wf |>
+fit(data = df |> select(where(is.numeric)))
+kmeans_fit
+prepped_rec <- prep(rec_spec)
+prepped_rec
+norm_steps <- prepped_rec$steps[[which(sapply(prepped_rec$steps, function(x) x$term) == "normalize")]]
+norm_steps <- prepped_rec$steps[[which(sapply(prepped_rec$steps, function(x) x$term) == "normalize")]]
+prepped_rec$steps
+prepped_rec$steps
+prepped_rec$steps$means
+prepped_rec$steps
+prepped_rec$steps[1]
+prepped_rec$steps[2]
+prepped_rec$steps[1][1]
+!!!prepped_rec$steps
+prepped_rec$steps!!!
+prepped_rec$steps!!
+prepped_rec$steps
+prepped_rec$steps
+prepped_rec$steps[[1]]$means
+norm_means <- prepped_rec$steps[[1]]$means
+norm_sds   <- prepped_rec$steps[[1]]$sds
+norm_sds
+k <- 3
+df <- datasets[["Penguins"]] |>
+drop_na()
+# K means test
+rec_spec <- recipe(~ ., data = df |> select(where(is.numeric))) %>%
+step_normalize(all_numeric_predictors())
+prepped_rec <- prep(rec_spec)
+norm_means <- prepped_rec$steps[[1]]$means
+norm_sds   <- prepped_rec$steps[[1]]$sds
+kmeans_spec <- k_means(num_clusters = k) %>%
+set_engine("ClusterR")
+kmeans_wf <- workflow(rec_spec, kmeans_spec)
+kmeans_fit <- kmeans_wf |>
+fit(data = df |> select(where(is.numeric)))
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = bill_length_mm, y = body_mass_g, color = .pred_cluster)) +
+geom_point() +
+labs(title = "K-Means Clustering")
+tidy(kmeans_fit)
+library(shiny)
+library(tidyverse)
+library(bslib)
+library(palmerpenguins)
+library(tidyquant)
+library(tidyclust)
+library(tidymodels)
+theme_set(theme_minimal())
+pengs_tbl <- penguins
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+pengs_tbl |>
+ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+geom_point() +
+labs(title = "Penguin Body Mass vs Flipper Length")
+cars_tbl |>
+ggplot(aes(x = wt, y = mpg, color = factor(cyl))) +
+geom_point() +
+labs(title = "Car Weight vs MPG")
+iris_tbl |>
+ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+geom_point() +
+labs(title = "Iris Sepal Length vs Sepal Width")
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+k <- 3
+df <- datasets[["Penguins"]] |>
+drop_na()
+# K means test
+rec_spec <- recipe(~ ., data = df |> select(where(is.numeric))) %>%
+step_normalize(all_numeric_predictors())
+prepped_rec <- prep(rec_spec)
+norm_means <- prepped_rec$steps[[1]]$means
+norm_sds   <- prepped_rec$steps[[1]]$sds
+kmeans_spec <- k_means(num_clusters = k) %>%
+set_engine("ClusterR")
+kmeans_wf <- workflow(rec_spec, kmeans_spec)
+kmeans_fit <- kmeans_wf |>
+fit(data = df |> select(where(is.numeric)))
+tidy(kmeans_fit)
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = bill_length_mm, y = body_mass_g, color = .pred_cluster)) +
+geom_point() +
+labs(title = "K-Means Clustering")
+extract_centroids(kmeans_fit)
+centroids <- extract_centroids(kmeans_fit)
+# Reverse normalization for centroids
+centroids$bill_length_mm <- (centroids$bill_length_mm * norm_sds$bill_length_mm) + norm_means$bill_length_mm
+centroids
+centroids$bill_length_mm
+(centroids$bill_length_mm * norm_sds$bill_length_mm)
+norm_sds
+(centroids$bill_length_mm * norm_sds[1])
+(centroids$bill_length_mm * norm_sds[1]) + norm_means[1]
+# Reverse normalization for centroids
+centroids$bill_length_mm <- (centroids$bill_length_mm * norm_sds[1]) + norm_means[1]
+centroids$body_mass_g <- (centroids$body_mass_g * norm_sds[1]) + norm_means[1]
+# Reverse normalization for centroids
+centroids$bill_length_mm <- (centroids$bill_length_mm * norm_sds[1]) + norm_means[1]
+centroids$body_mass_g <- (centroids$body_mass_g * norm_sds[1]) + norm_means[1]
+library(shiny)
+library(tidyverse)
+library(bslib)
+library(palmerpenguins)
+library(tidyquant)
+library(tidyclust)
+library(tidymodels)
+theme_set(theme_minimal())
+pengs_tbl <- penguins
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+pengs_tbl |>
+ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+geom_point() +
+labs(title = "Penguin Body Mass vs Flipper Length")
+cars_tbl |>
+ggplot(aes(x = wt, y = mpg, color = factor(cyl))) +
+geom_point() +
+labs(title = "Car Weight vs MPG")
+iris_tbl |>
+ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+geom_point() +
+labs(title = "Iris Sepal Length vs Sepal Width")
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+k <- 3
+df <- datasets[["Penguins"]] |>
+drop_na()
+# K means test
+rec_spec <- recipe(~ ., data = df |> select(where(is.numeric))) %>%
+step_normalize(all_numeric_predictors())
+prepped_rec <- prep(rec_spec)
+norm_means <- prepped_rec$steps[[1]]$means
+norm_sds   <- prepped_rec$steps[[1]]$sds
+kmeans_spec <- k_means(num_clusters = k) %>%
+set_engine("ClusterR")
+kmeans_wf <- workflow(rec_spec, kmeans_spec)
+kmeans_fit <- kmeans_wf |>
+fit(data = df |> select(where(is.numeric)))
+centroids <- extract_centroids(kmeans_fit)
+# Reverse normalization for centroids
+centroids$bill_length_mm <- (centroids$bill_length_mm * norm_sds[1]) + norm_means[1]
+centroids$body_mass_g <- (centroids$body_mass_g * norm_sds[1]) + norm_means[1]
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = bill_length_mm, y = body_mass_g)) +
+geom_point(aes(color = species)) + # Assuming 'species' is available in your df for coloring
+geom_point(data = centroids, aes(x = bill_length_mm, y = body_mass_g, color = factor(cluster)), size = 5, shape = 8) +
+labs(title = "Penguin Body Mass vs Flipper Length with K-Means Centroids")
+augment(df |> select(where(is.numeric)))
+kmeans_fit |> augment(df |> select(where(is.numeric)))
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = bill_length_mm, y = body_mass_g)) +
+geom_point(aes(color = .pred_cluster)) + # Assuming 'species' is available in your df for coloring
+geom_point(data = centroids, aes(x = bill_length_mm, y = body_mass_g, color = factor(.pred_cluster)), size = 5, shape = 8) +
+labs(title = "Penguin Body Mass vs Flipper Length with K-Means Centroids")
+augment(df |> select(where(is.numeric)))
+kmeans_fit |> augment(df |> select(where(is.numeric)))
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = bill_length_mm, y = body_mass_g))
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = bill_length_mm, y = body_mass_g)) +
+geom_point(aes(color = .pred_cluster))
+centroids
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = bill_length_mm, y = body_mass_g)) +
+geom_point(aes(color = .pred_cluster)) + # Assuming 'species' is available in your df for coloring
+geom_point(data = centroids, aes(x = bill_length_mm, y = body_mass_g), size = 5, shape = 8) +
+labs(title = "Penguin Body Mass vs Flipper Length with K-Means Centroids")
+centroids
+centroids <- extract_centroids(kmeans_fit)
+centroids
+norm_means <- prepped_rec$steps[[1]]$means
+norm_sds   <- prepped_rec$steps[[1]]$sds
+norm_means
+norm_sds
+library(shiny)
+library(tidyverse)
+library(bslib)
+library(palmerpenguins)
+library(tidyquant)
+library(tidyclust)
+library(tidymodels)
+theme_set(theme_minimal())
+pengs_tbl <- penguins
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+pengs_tbl |>
+ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+geom_point() +
+labs(title = "Penguin Body Mass vs Flipper Length")
+cars_tbl |>
+ggplot(aes(x = wt, y = mpg, color = factor(cyl))) +
+geom_point() +
+labs(title = "Car Weight vs MPG")
+iris_tbl |>
+ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+geom_point() +
+labs(title = "Iris Sepal Length vs Sepal Width")
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+k <- 3
+df <- datasets[["Penguins"]] |>
+drop_na()
+# K means test
+rec_spec <- recipe(~ ., data = df |> select(where(is.numeric))) %>%
+step_normalize(all_numeric_predictors())
+prepped_rec <- prep(rec_spec)
+norm_means <- prepped_rec$steps[[1]]$means
+norm_sds   <- prepped_rec$steps[[1]]$sds
+kmeans_spec <- k_means(num_clusters = k) %>%
+set_engine("ClusterR")
+kmeans_wf <- workflow(rec_spec, kmeans_spec)
+kmeans_fit <- kmeans_wf |>
+fit(data = df |> select(where(is.numeric)))
+centroids <- extract_centroids(kmeans_fit)
+# Reverse normalization for centroids
+centroids$bill_length_mm <- (centroids$bill_length_mm * norm_sds[1]) + norm_means[1]
+centroids$body_mass_g <- (centroids$body_mass_g * norm_sds[4]) + norm_means[4]
+kmeans_fit |> augment(df |> select(where(is.numeric))) |>
+ggplot(aes(x = bill_length_mm, y = body_mass_g)) +
+geom_point(aes(color = .pred_cluster)) + # Assuming 'species' is available in your df for coloring
+geom_point(data = centroids, aes(x = bill_length_mm, y = body_mass_g), size = 5, shape = 8) +
+labs(title = "Penguin Body Mass vs Flipper Length with K-Means Centroids")
+runApp('app')
+centroids <- extract_centroids(kmeans_fit)
+centroids
+augment(df |> select(where(is.numeric)))
+kmeans_fit |> augment(df |> select(where(is.numeric)))
+runApp('app')
+kmeans_fit
+kmeans_fit$fit
+# K means test
+rec_spec <- recipe(~ ., data = df |> select(where(is.numeric))) %>%
+step_normalize(all_numeric_predictors())
+prepped_rec <- prep(rec_spec)
+norm_means <- prepped_rec$steps[[1]]$means
+norm_sds   <- prepped_rec$steps[[1]]$sds
+library(shiny)
+library(tidyverse)
+library(bslib)
+library(palmerpenguins)
+library(tidyquant)
+library(tidyclust)
+library(tidymodels)
+theme_set(theme_minimal())
+pengs_tbl <- penguins
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+pengs_tbl |>
+ggplot(aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+geom_point() +
+labs(title = "Penguin Body Mass vs Flipper Length")
+cars_tbl |>
+ggplot(aes(x = wt, y = mpg, color = factor(cyl))) +
+geom_point() +
+labs(title = "Car Weight vs MPG")
+iris_tbl |>
+ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+geom_point() +
+labs(title = "Iris Sepal Length vs Sepal Width")
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+k <- 3
+df <- datasets[["Penguins"]] |>
+drop_na()
+# K means test
+rec_spec <- recipe(~ ., data = df |> select(where(is.numeric))) %>%
+step_normalize(all_numeric_predictors())
+kmeans_spec_tuned <- kmeans_spec %>%
+set_args(num_clusters = tune())
+kmeans_wf <- workflow() %>%
+add_model(kmeans_spec_tuned) %>%
+add_formula(~.)
+set.seed(1234)
+x_boots <- bootstraps(df |> select(where(is.numeric)), times = 10)
+x_boots
+num_clusters_grid <- tibble(num_clusters = seq(1, 10))
+tune_res <- tune_cluster(
+object = kmeans_wf,
+resamples = x_boots,
+grid = num_clusters_grid
+)
+tune_res %>% collect_metrics()
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total")
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total")
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line()
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point()
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point() +
+labs(
+x = "Number of Clusters",
+y = "SSE Within Total"
+)
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point() +
+geom_text(aes(label = num_clusters), nudge_y = 1000, check_overlap = TRUE) +
+labs(
+x = "Number of Clusters",
+y = "SSE Within Total"
+)
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point() +
+geom_text(aes(label = num_clusters), nudge_y = 0, check_overlap = TRUE) +
+labs(
+x = "Number of Clusters",
+y = "SSE Within Total"
+)
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point() +
+geom_text(aes(label = num_clusters), nudge_y = 2500, check_overlap = TRUE) +
+labs(
+x = "Number of Clusters",
+y = "SSE Within Total"
+)
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point() +
+geom_text(aes(label = num_clusters), nudge_y = 200000, check_overlap = TRUE) +
+labs(
+x = "Number of Clusters",
+y = "SSE Within Total"
+)
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point() +
+geom_text(aes(label = num_clusters), nudge_x = 2, check_overlap = TRUE) +
+labs(
+x = "Number of Clusters",
+y = "SSE Within Total"
+)
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point() +
+geom_text(aes(label = num_clusters), nudge_x = 1, check_overlap = TRUE) +
+labs(
+x = "Number of Clusters",
+y = "SSE Within Total"
+)
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point() +
+geom_text(aes(label = num_clusters), nudge_x = 0.05, check_overlap = TRUE) +
+labs(
+x = "Number of Clusters",
+y = "SSE Within Total"
+)
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point() +
+geom_text(aes(label = num_clusters), nudge_x = 0.1, check_overlap = TRUE) +
+labs(
+x = "Number of Clusters",
+y = "SSE Within Total"
+)
+tune_res %>%
+collect_metrics() |>
+filter(.metric == "sse_within_total") |>
+ggplot(aes(x = num_clusters, y = mean)) +
+geom_line() +
+geom_point() +
+geom_text(aes(label = num_clusters), nudge_x = -0.15, check_overlap = TRUE) +
+labs(
+x = "Number of Clusters",
+y = "SSE Within Total"
+)
+runApp('app')
+runApp('app')
+runApp('app')
+runApp('app')
+runApp('app')
+runApp('app')
+runApp('app')
+pengs_tbl <- penguins
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+datasets[["Pengiuns"]]
+library(shiny)
+library(tidyverse)
+library(bslib)
+library(palmerpenguins)
+library(tidyquant)
+library(tidyclust)
+library(tidymodels)
+theme_set(theme_minimal())
+pengs_tbl <- penguins
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+datasets[["Pengiuns"]]
+datasets["Pengiuns"]
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+datasets["Penguins"]
+datasets["Penguins"] |> select(where(is.numeric))
+datasets <- list(
+"Penguins" = pengs_tbl,
+"Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+datasets["Penguins"] |> select(where(is.numeric))
+datasets["Penguins"]
+datasets[["Penguins"]] |> select(where(is.numeric))
+datasets[["Penguins"]] |> select(where(is.numeric)) |> names()
+names_penguins <- datasets[["Penguins"]] |> select(where(is.numeric)) |> names()
+names_penguins <- datasets[["Penguins"]] |> select(where(is.numeric)) |> names()
+names_cars     <- datasets[["Cars"]] |> select(where(is.numeric)) |> names()
+names_iris     <- datasets[["Iris"]] |> select(where(is.numeric)) |> names()
+names_iris
+names_cars
+names_penguins
+pengs_tbl <- penguins
+cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+pengs_tbl
+cars_tbl  <- mtcars |> as_tibble()
+cars_tbl
+library(shiny)
+library(tidyverse)
+library(bslib)
+library(palmerpenguins)
+library(tidyquant)
+library(tidyclust)
+library(tidymodels)
+theme_set(theme_minimal())
+pengs_tbl <- penguins
+# cars_tbl  <- mtcars |> as_tibble()
+iris_tbl  <- iris |> as_tibble()
+datasets <- list(
+"Penguins" = pengs_tbl,
+# "Cars"     = cars_tbl,
+"Iris"     = iris_tbl
+)
+names_penguins <- datasets[["Penguins"]] |> select(where(is.numeric)) |> names()
+names_iris     <- datasets[["Iris"]] |> select(where(is.numeric)) |> names()
+names_penguins
+names_iris
+runApp('app')
+runApp('app')
+runApp('app')
+runApp('app')
+runApp('app')
+runApp('app')

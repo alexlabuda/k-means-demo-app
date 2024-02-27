@@ -142,12 +142,14 @@ server <- function(input, output) {
       input$penguins_y
     
     ggplot(data, aes_string(x = x_col, y = y_col)) +
-      geom_point(aes(color = species), size = 3, alpha = 0.5) +
+      geom_point(aes(color = species), size = 3.5, alpha = 0.5) +
       labs(title = paste(input$dataset, "Dataset")) +
-      theme(legend.position = "top",
-            legend.text = element_text(size = 12),
-            panel.grid = element_blank(),
-            axis.text = element_text(size = 11)) +
+      theme(
+        legend.position = legend_loc,
+        legend.text     = element_text(size = 12),
+        panel.grid      = element_blank(),
+        axis.text       = element_text(size = 12),
+        axis.title      = element_text(size = 12)) +
       tidyquant::scale_color_tq()
   })
   
@@ -207,7 +209,7 @@ server <- function(input, output) {
     
     # Plot the clustered data
     ggplot(plot_data, aes_string(x = x_col, y = y_col, color = "Cluster")) +
-      geom_point(size = 3, alpha = alpha_val - 0.25) +
+      geom_point(size = 3.5, alpha = alpha_val - 0.25) +
       geom_point(
         data = centroids,
         aes_string(x = x_col, y = y_col),
@@ -271,7 +273,7 @@ server <- function(input, output) {
       labs(x = "Number of Clusters",
            y = "SSE Within Total") +
       theme(panel.grid = element_blank(),
-            axis.text = element_text(size = 12),
+            axis.text  = element_text(size = 12),
             axis.title = element_text(size = 12))
   })
 }

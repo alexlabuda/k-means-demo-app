@@ -31,6 +31,14 @@ names_iris     <- datasets[["Iris"]] |> select(where(is.numeric)) |> names()
 # UI ----------------------------------------------------------------------
 
 ui <- page_sidebar(
+  # Custom CSS to change sidebar opacity
+  tags$head(
+    tags$style(HTML("
+        .sidebar { 
+          background-color: rgba(255, 255, 255, 0.95) !important; 
+        }
+      "))
+  ),
   
   title   = "K-Means Clustering Demo",
   theme   = bs_theme(bootswatch = "minty"),

@@ -10,6 +10,7 @@ library(tidyclust)
 library(tidymodels)
 library(ClusterR)
 
+
 # set default theme for plots
 theme_set(theme_minimal())
 
@@ -149,7 +150,7 @@ server <- function(input, output) {
     else
       input$penguins_y
     
-    ggplot(data, aes_string(x = x_col, y = y_col)) +
+    ggplot(data, aes(x = .data[[x_col]], y = .data[[y_col]])) +
       geom_point(aes(color = species), size = 3.5, alpha = 0.5) +
       labs(title = paste(input$dataset, "Dataset")) +
       theme(
@@ -216,11 +217,11 @@ server <- function(input, output) {
       mutate(Cluster = factor(.pred_cluster))
     
     # Plot the clustered data
-    ggplot(plot_data, aes_string(x = x_col, y = y_col, color = "Cluster")) +
-      geom_point(size = 3.5, alpha = alpha_val - 0.25) +
+    ggplot(plot_data, aes(x = .data[[x_col]], y = .data[[y_col]], color = Cluster)) +
+      geom_point(size = 3.5, alpha = alpha_val - 0.3) +
       geom_point(
         data = centroids,
-        aes_string(x = x_col, y = y_col),
+        aes(x = .data[[x_col]], y = .data[[y_col]]),
         color = "black",
         size  = 5,
         shape = 15
@@ -243,46 +244,89 @@ server <- function(input, output) {
     # Data
     data <- selected_data() |> select(where(is.numeric))
     
-    # Model specification
-    kmeans_spec_tune <- k_means() %>%
-      set_engine("ClusterR")
+    # Recipe preprocessing specification
+    rec_spec <- recipe( ~ ., data = data) %>%
+      step_normalize(all_numeric_predictors())
     
-    # Tuning
-    kmeans_spec_tuned <- kmeans_spec_tune %>%
-      set_args(num_clusters = tune())
+    # Prep and bake our data
+    data <- prep(rec_spec) |> bake(new_data = data)
     
-    # Workflow
-    kmeans_wf <- workflow() %>%
-      add_model(kmeans_spec_tuned) %>%
-      add_formula( ~ .)
+    kmeans_mapper <- function(centers = 3) {
+      
+      data |>
+        kmeans(centers = centers, nstart = 1)
+      
+    }
     
-    # Bootstrap resampling
-    set.seed(1234)
-    x_boots <- bootstraps(data, times = 5)
+    # map() function to many elements
+    k_means_mapped_tbl <-
+      tibble(centers = 1:9) |>
+      mutate(k_means = centers |> map(kmeans_mapper)) |>
+      mutate(glance  = k_means |> map(glance))
     
-    # Create a grid of k clusters
-    num_clusters_grid <- tibble(num_clusters = seq(1, 10))
     
-    # Tune the model
-    tune_res <- tune_cluster(object    = kmeans_wf,
-                             resamples = x_boots,
-                             grid      = num_clusters_grid)
-    
-    # Plot the tuning results
-    tune_res %>%
-      collect_metrics() |>
-      filter(.metric == "sse_within_total") |>
-      ggplot(aes(x = num_clusters, y = mean)) +
+    ### Skree Plot ----
+    k_means_mapped_tbl |>
+      unnest(cols = glance) |>
+      select(centers, tot.withinss) |>
+      ggplot(aes(centers, tot.withinss)) +
+      geom_point(size = 2) +
       geom_line() +
-      geom_point() +
-      geom_text(aes(label = num_clusters),
-                nudge_x = -0.15,
-                check_overlap = TRUE) +
-      labs(x = "Number of Clusters",
-           y = "SSE Within Total") +
-      theme(panel.grid = element_blank(),
+      ggrepel::geom_label_repel(aes(label = centers)) +
+      theme_minimal() +
+      labs(
+        x = "Number of clusters"
+        # title    = "Scree Plot",
+        # subtitle = "Measures the distance that each customers \nare from the closest K-Means center",
+        # caption  = "Based on the Scree Plot, we are selecting 5 clusters to segment customers"
+      ) +
+      theme(plot.title = element_text(face = "bold", size = 14),
+            panel.grid = element_blank(),
             axis.text  = element_text(size = 12),
             axis.title = element_text(size = 12))
+    
+    
+    # Old code for skree plot
+    # # Model specification
+    # kmeans_spec_tune <- k_means() %>%
+    #   set_engine("ClusterR")
+    # 
+    # # Tuning
+    # kmeans_spec_tuned <- kmeans_spec_tune %>%
+    #   set_args(num_clusters = tune())
+    # 
+    # # Workflow
+    # kmeans_wf <- workflow() %>%
+    #   add_model(kmeans_spec_tuned) %>%
+    #   add_formula( ~ .)
+    # 
+    # # Bootstrap resampling
+    # set.seed(1234)
+    # x_boots <- bootstraps(data, times = 5)
+    # 
+    # # Create a grid of k clusters
+    # num_clusters_grid <- tibble(num_clusters = seq(1, 10))
+    # 
+    # # Tune the model
+    # tune_res <- tune_cluster(object    = kmeans_wf,
+    #                          resamples = x_boots,
+    #                          grid      = num_clusters_grid)
+    # 
+    # # Plot the tuning results
+    # tune_res %>%
+    #   collect_metrics() |>
+    #   filter(.metric == "sse_within_total") |>
+    #   ggplot(aes(x = num_clusters, y = mean)) +
+    #   geom_line() +
+    #   geom_point() +
+    #   geom_text(aes(label = num_clusters),
+    #             nudge_x = -0.15,
+    #             check_overlap = TRUE) +
+    #   labs(x = "Number of Clusters",
+    #        y = "SSE Within Total") +
+    #   theme(panel.grid = element_blank(),
+    #         axis.text  = element_text(size = 12),
+    #         axis.title = element_text(size = 12))
   })
 }
 

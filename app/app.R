@@ -2,6 +2,7 @@
 # LIBRARIES ---------------------------------------------------------------
 
 library(shiny)
+library(shinyBS)
 library(tidyverse)
 library(bslib)
 library(palmerpenguins)
@@ -116,14 +117,23 @@ ui <- page_sidebar(
     )
   ),
   card(
-    card_header("SSE vs. Number of Clusters"),
+    card_header(
+      "SSE vs. Number of Clusters",
+      tooltip(
+        bsicons::bs_icon("question-circle"),
+        "The total within-cluster sum of squares. One common method to choose the optimal number of clusters is the elbow method, which involves plotting the tot.withinss against various values of clusters and looking for an elbow point. This point indicates a diminishing return in improvement of cluster compactness, suggesting an optimal value.",
+        placement = "right"
+      )
+      ),
     height = "25%",
+    min_height = "240px",
     plotOutput(outputId = "tune_plot")
   )
 )
 
 
-server <- function(input, output) {
+server <- function(input, output, session) {
+  
   # Reactive expression to get the selected dataset
   selected_data <- reactive({
     datasets[[input$dataset]] |>

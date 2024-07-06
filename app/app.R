@@ -13,11 +13,11 @@ library(ClusterR)
 
 
 # set default theme for plots
-theme_set(theme_minimal())
+ggplot2::theme_set(theme_minimal())
 
 # read data used for the app
-pengs_tbl <- penguins
-iris_tbl  <- iris |> as_tibble() |> rename(species = Species)
+pengs_tbl <- palmerpenguins::penguins
+iris_tbl  <- iris |> dplyr::as_tibble() |> dplyr::rename(species = Species)
 
 # create a list of datasets
 datasets <- list(
@@ -32,7 +32,7 @@ names_iris     <- datasets[["Iris"]] |> select(where(is.numeric)) |> names()
 
 # UI ----------------------------------------------------------------------
 
-ui <- page_sidebar(
+ui <- bslib::page_sidebar(
   # Custom CSS to change sidebar opacity
   tags$head(
     tags$style(HTML("
@@ -147,7 +147,7 @@ server <- function(input, output, session) {
   
   # Scatterplot 1 ---------------------------------------------------------
   # Dynamically adjust plot based on the dataset selected
-  output$plot <- renderPlot({
+  output$plot <- shiny::renderPlot({
     data <- selected_data()
     x_col <-
       if (input$dataset == "Iris")
@@ -173,7 +173,7 @@ server <- function(input, output, session) {
   })
   
   # K-means clustering ----------------------------------------------------
-  output$cluster_plot <- renderPlot({
+  output$cluster_plot <- shiny::renderPlot({
     
     data <- selected_data() |> select(where(is.numeric))
     
@@ -249,7 +249,7 @@ server <- function(input, output, session) {
   
   # K-means tuning --------------------------------------------------------
   # For selecting the best k clusters
-  output$tune_plot <- renderPlot({
+  output$tune_plot <- shiny::renderPlot({
     
     # Data
     data <- selected_data() |> select(where(is.numeric))
@@ -341,4 +341,4 @@ server <- function(input, output, session) {
 }
 
 
-shinyApp(ui, server)
+shiny::shinyApp(ui, server)
